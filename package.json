@@ -1,0 +1,29 @@
+{
+  "name": "@uuon-foundation/mandelbox-amazing-family-engine",
+  "version": "1.0.0",
+  "description": "Real-time WebGL2 ray marching fractal renderer, four fractal types, token-gated iterations, Base Mainnet. UUON Foundation Inc.",
+  "keywords": [
+    "ray",
+    "marching",
+    "fractal",
+    "render"
+  ],
+  "homepage": "https://github.com/UUON-Foundation/mandelbox-amazing-family-engine#readme",
+  "bugs": {
+    "url": "https://github.com/UUON-Foundation/mandelbox-amazing-family-engine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UUON-Foundation/mandelbox-amazing-family-engine.git"
+  },
+  "license": "LicenseRef-USAL-1.0",
+  "author": "Phillip Aguilar Ruiz III <phi1@uuonfoundation.com>",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
