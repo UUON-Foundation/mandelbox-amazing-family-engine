@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>UUON · Amazing Family Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.15.0/ethers.umd.min.js"></script>
+<!-- Engine core — proprietary, served from uuon.world -->
+<script src="https://uuon.world/engine/amazing-family/core.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--void:#ffffff;--teal:#111111;--gold:#555555;--panel:#f5f5f0;--border:#cccccc;--text:#555555;--bright:#000000;--err:#cc2222;--dim:#999999}
+html,body{width:100%;height:100%;background:var(--void);color:var(--bright);font-family:'Share Tech Mono','Courier New',monospace;overflow:hidden}
+#wrap{display:flex;width:100%;height:100%}
+#sidebar{width:310px;min-width:310px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:10;overflow:hidden}
+#tabbar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:10px 0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);cursor:pointer;text-align:center;border:none;background:none;font-family:inherit;border-bottom:2px solid transparent}
+.tab:hover{color:var(--bright)}.tab.act{color:var(--teal);border-bottom-color:var(--teal)}
+.tabpanel{display:none;flex:1;overflow-y:auto;padding:12px;gap:11px;flex-direction:column}
+.tabpanel.vis{display:flex}
+.slabel{font-size:10px;letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-bottom:5px}
+.ctrl{display:flex;flex-direction:column;gap:4px;margin-bottom:7px}
+.ctrl label{font-size:11px;color:var(--text);display:flex;justify-content:space-between}
+.ctrl label span{color:var(--teal);min-width:46px;text-align:right}
+.ctrl input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--border);outline:none;cursor:pointer;border-radius:2px}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--teal);cursor:pointer}
+.btn-row{display:flex;gap:5px;flex-wrap:wrap}
+button{background:transparent;border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;letter-spacing:.1em;padding:6px 10px;cursor:pointer;text-transform:uppercase;transition:all .1s}
+button:hover:not(:disabled){border-color:var(--teal);color:var(--teal)}
+button.act{border-color:var(--teal);color:var(--teal);background:rgba(0,0,0,.05)}
+button:disabled{opacity:.3;cursor:not-allowed}
+select{background:var(--void);border:1px solid var(--border);color:var(--bright);font-family:inherit;font-size:10px;padding:4px 6px;width:100%;margin-top:5px;outline:none}
+select:focus{border-color:var(--teal)}
+.section{border-top:1px solid var(--border);padding-top:10px}
+.pblock{display:none;flex-direction:column}.pblock.vis{display:flex}
+#status{font-size:10px;color:var(--text);line-height:1.75;margin-top:auto;border-top:1px solid var(--border);padding-top:8px;flex-shrink:0;padding:8px 12px}
+#status .ok{color:var(--teal)} #status .er{color:var(--err)}
+.anim-desc{font-size:10px;color:var(--dim);line-height:1.6;margin-top:5px;padding:6px 8px;border-left:2px solid var(--border);min-height:30px}
+.anim-desc.on{color:var(--text);border-left-color:var(--teal)}
+.info-h{font-size:10px;letter-spacing:.16em;color:var(--teal);text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.info-block{margin-bottom:14px}
+.info-p{font-size:10px;color:var(--text);line-height:1.75;margin-bottom:6px}
+.info-p b{color:var(--bright)}.info-p em{color:var(--gold);font-style:normal}
+.kv{display:flex;gap:7px;margin-bottom:4px;align-items:flex-start}
+.kv .k{color:var(--gold);font-size:10px;min-width:62px;flex-shrink:0}
+.kv .v{color:var(--text);font-size:10px;line-height:1.6;word-break:break-all}
+.tag{display:inline-block;border:1px solid var(--border);color:var(--dim);font-size:9px;padding:2px 5px;letter-spacing:.08em;margin:2px}
+.warn{color:#774400;font-size:10px;line-height:1.6;border-left:2px solid #aa6600;padding-left:8px;margin-bottom:7px}
+.gate-box{font-size:10px;color:var(--dim);padding:5px 0;line-height:1.5}
+.badge{display:inline-block;font-size:9px;letter-spacing:.08em;padding:2px 6px;border:1px solid;margin:2px}
+.badge.locked{border-color:var(--dim);color:var(--dim)}
+.badge.piez{border-color:#777;color:#444}
+.badge.psent{border-color:var(--teal);color:var(--teal)}
+.databox{font-size:9px;color:var(--text);background:#e8e8e8;padding:7px;margin-top:7px;max-height:110px;overflow-y:auto;white-space:pre;border:1px solid var(--border)}
+#cycleFlash{display:none;position:absolute;inset:0;background:#fff;pointer-events:none;z-index:5;opacity:0;transition:opacity .25s}
+#cv{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%;cursor:grab;background:#fff}
+canvas:active{cursor:grabbing}
+#errbox{display:none;position:absolute;inset:0;background:rgba(255,255,255,.95);color:var(--err);font-size:11px;padding:20px;white-space:pre-wrap;overflow:auto;z-index:20}
+#engStatus{position:absolute;top:12px;right:12px;font-size:10px;color:var(--dim);letter-spacing:.1em;z-index:15}
+#dloverlay{display:none;position:absolute;inset:0;background:rgba(255,255,255,.88);z-index:30;align-items:center;justify-content:center;flex-direction:column}
+#dloverlay.vis{display:flex}
+#dloverlay .dlbox{background:var(--panel);border:1px solid var(--teal);padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:12px}
+#dloverlay .dltitle{font-size:11px;letter-spacing:.2em;color:var(--teal);text-transform:uppercase}
+#dloverlay a.dlbtn{display:block;border:1px solid var(--teal);color:var(--teal);font-family:inherit;font-size:11px;letter-spacing:.12em;padding:8px 20px;text-decoration:none;text-transform:uppercase;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dloverlay a.dlbtn:hover{background:rgba(0,0,0,.05)}
+#dloverlay .dlhint{font-size:10px;color:var(--text);text-align:center;max-width:240px;line-height:1.6}
+#dloverlay .dlclose{font-size:10px;color:var(--text);cursor:pointer;letter-spacing:.1em;text-transform:uppercase;border:none;background:none;font-family:inherit}
+#dloverlay .dlclose:hover{color:var(--bright)}
+#bar{position:absolute;bottom:0;left:0;right:0;background:rgba(245,245,240,.92);border-top:1px solid var(--border);font-size:10px;color:var(--text);padding:4px 12px;display:flex;gap:16px;letter-spacing:.08em;flex-wrap:wrap}
+#bar span{color:var(--bright)}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="sidebar">
+  <div id="tabbar">
+    <button class="tab act" onclick="switchTab('ctrl')">Controls</button>
+    <button class="tab" onclick="switchTab('dapp')">dApp</button>
+    <button class="tab" onclick="switchTab('info')">Info</button>
+  </div>
+
+  <!-- CONTROLS -->
+  <div id="tab-ctrl" class="tabpanel vis">
+    <div>
+      <div class="slabel">Fractal Type</div>
+      <div class="btn-row">
+        <button id="m0" class="act" onclick="setMode(0)">Mandelbox</button>
+        <button id="m1" onclick="setMode(1)">Amaz Surf</button>
+        <button id="m2" onclick="setMode(2)">Surf Mod1</button>
+        <button id="m3" onclick="setMode(3)">Box Julia</button>
+      </div>
+    </div>
+    <div>
+      <div class="slabel">Iterations · <span style="color:var(--dim);font-size:9px">gated by token</span></div>
+      <div class="btn-row">
+        <button id="it6" onclick="setIter(6)">6</button>
+        <button id="it8" class="act" onclick="setIter(8)">8</button>
+        <button id="it12" onclick="setIter(12)">12 <span style="font-size:8px">PIEZ</span></button>
+        <button id="it16" onclick="setIter(16)">16 <span style="font-size:8px">PSENT</span></button>
+      </div>
+    </div>
+    <div id="p0" class="pblock vis section">
+      <div class="slabel">Mandelbox</div>
+      <div class="ctrl"><label>Scale <span id="vSc">-1.50</span></label>
+        <input id="slMBSc" type="range" min="-3" max="-1" step="0.01" value="-1.5" oninput="U.mbScale=+this.value;lbl('vSc',this.value)"></div>
+      <div class="ctrl"><label>Fold Limit <span id="vFL">1.00</span></label>
+        <input type="range" min="0.5" max="2" step="0.01" value="1" oninput="U.mbFold=+this.value;lbl('vFL',this.value)"></div>
+      <div class="ctrl"><label>Min Radius <span id="vMR">0.50</span></label>
+        <input type="range" min="0.1" max="1.5" step="0.01" value="0.5" oninput="U.mbMinR=+this.value;lbl('vMR',this.value)"></div>
+      <div class="ctrl"><label>Fixed Radius <span id="vFR">1.00</span></label>
+        <input type="range" min="0.5" max="2" step="0.01" value="1" oninput="U.mbFixR=+this.value;lbl('vFR',this.value)"></div>
+    </div>
+    <div id="p1" class="pblock section">
+      <div class="slabel">Amazing Surf</div>
+      <div class="ctrl"><label>Scale <span id="vSSc">-1.78</span></label>
+        <input id="slASSc" type="range" min="-3" max="-1" step="0.01" value="-1.78" oninput="U.sScale=+this.value;lbl('vSSc',this.value)"></div>
+      <div class="ctrl"><label>Fold Limit <span id="vSFL">1.00</span></label>
+        <input type="range" min="0.5" max="2" step="0.01" value="1" oninput="U.sFold=+this.value;lbl('vSFL',this.value)"></div>
+      <div class="ctrl"><label>Min R XY <span id="vSMR">0.50</span></label>
+        <input type="range" min="0.1" max="1.5" step="0.01" value="0.5" oninput="U.sMinR=+this.value;lbl('vSMR',this.value)"></div>
+      <div class="ctrl"><label>Fix R XY <span id="vSFR">1.00</span></label>
+        <input type="range" min="0.5" max="2" step="0.01" value="1" oninput="U.sFixR=+this.value;lbl('vSFR',this.value)"></div>
+    </div>
+    <div id="p2" class="pblock section">
+      <div class="slabel">Surf Mod1</div>
+      <div class="ctrl"><label>Scale <span id="vM1Sc">-1.78</span></label>
+        <input id="slM1Sc" type="range" min="-3" max="-1" step="0.01" value="-1.78" oninput="U.m1Scale=+this.value;lbl('vM1Sc',this.value)"></div>
+      <div class="ctrl"><label>Fold Limit <span id="vM1FL">1.00</span></label>
+        <input type="range" min="0.5" max="2" step="0.01" value="1" oninput="U.m1Fold=+this.value;lbl('vM1FL',this.value)"></div>
+      <div class="ctrl"><label>Julia X <span id="vM1JX">0.10</span></label>
+        <input id="slM1JX" type="range" min="-2" max="2" step="0.01" value="0.1" oninput="U.m1JX=+this.value;lbl('vM1JX',this.value)"></div>
+      <div class="ctrl"><label>Julia Y <span id="vM1JY">0.30</span></label>
+        <input id="slM1JY" type="range" min="-2" max="2" step="0.01" value="0.3" oninput="U.m1JY=+this.value;lbl('vM1JY',this.value)"></div>
+      <div class="ctrl"><label>Julia Z <span id="vM1JZ">0.00</span></label>
+        <input id="slM1JZ" type="range" min="-2" max="2" step="0.01" value="0" oninput="U.m1JZ=+this.value;lbl('vM1JZ',this.value)"></div>
+    </div>
+    <div id="p3" class="pblock section">
+      <div class="slabel">Box Julia</div>
+      <div class="ctrl"><label>Scale <span id="vBJSc">-1.50</span></label>
+        <input id="slBJSc" type="range" min="-3" max="-1" step="0.01" value="-1.5" oninput="U.bjScale=+this.value;lbl('vBJSc',this.value)"></div>
+      <div class="ctrl"><label>Fold Limit <span id="vBJFL">1.00</span></label>
+        <input type="range" min="0.5" max="2" step="0.01" value="1" oninput="U.bjFold=+this.value;lbl('vBJFL',this.value)"></div>
+      <div class="ctrl"><label>Julia c.x <span id="vBJX">0.20</span></label>
+        <input id="slBJCx" type="range" min="-2" max="2" step="0.01" value="0.2" oninput="U.bjCx=+this.value;lbl('vBJX',this.value)"></div>
+      <div class="ctrl"><label>Julia c.y <span id="vBJY">-0.40</span></label>
+        <input id="slBJCy" type="range" min="-2" max="2" step="0.01" value="-0.4" oninput="U.bjCy=+this.value;lbl('vBJY',this.value)"></div>
+      <div class="ctrl"><label>Julia c.z <span id="vBJZ">0.10</span></label>
+        <input id="slBJCz" type="range" min="-2" max="2" step="0.01" value="0.1" oninput="U.bjCz=+this.value;lbl('vBJZ',this.value)"></div>
+    </div>
+    <div class="section">
+      <div class="slabel">Camera</div>
+      <div class="ctrl"><label>Distance <span id="vCD">5.00</span></label>
+        <input id="camSlider" type="range" min="0.5" max="15" step="0.01" value="5" oninput="U.camDist=+this.value;lbl('vCD',this.value)"></div>
+      <div class="ctrl"><label>FOV <span id="vFV">1.00</span></label>
+        <input type="range" min="0.3" max="2" step="0.01" value="1" oninput="U.fov=+this.value;lbl('vFV',this.value)"></div>
+    </div>
+    <div class="section">
+      <div class="slabel">Shading</div>
+      <div class="ctrl"><label>Ambient <span id="vAM">0.18</span></label>
+        <input type="range" min="0" max="1" step="0.01" value="0.18" oninput="U.ambient=+this.value;lbl('vAM',this.value)"></div>
+      <div class="ctrl"><label>Diffuse <span id="vDF">0.85</span></label>
+        <input type="range" min="0" max="2" step="0.01" value="0.85" oninput="U.diffuse=+this.value;lbl('vDF',this.value)"></div>
+      <div class="ctrl"><label>Specular <span id="vSP">0.40</span></label>
+        <input type="range" min="0" max="2" step="0.01" value="0.4" oninput="U.specular=+this.value;lbl('vSP',this.value)"></div>
+      <div class="ctrl"><label>AO <span id="vAO">0.60</span></label>
+        <input type="range" min="0" max="1" step="0.01" value="0.6" oninput="U.aoStr=+this.value;lbl('vAO',this.value)"></div>
+    </div>
+    <div class="section">
+      <div class="slabel">Color</div>
+      <div class="btn-row">
+        <button id="c0" class="act" onclick="setColor(0)">Ink</button>
+        <button id="c1" onclick="setColor(1)">Sepia</button>
+        <button id="c2" onclick="setColor(2)">Slate</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="slabel">Animation</div>
+      <div class="btn-row">
+        <button id="an0" class="act" onclick="setAnim(0)">Off</button>
+        <button id="an1" onclick="setAnim(1)">Orbit</button>
+        <button id="an2" onclick="setAnim(2)">Spiral</button>
+        <button id="an3" onclick="setAnim(3)">Dive</button>
+      </div>
+      <div class="btn-row" style="margin-top:5px">
+        <button id="an4" onclick="setAnim(4)">Cinema</button>
+        <button id="an5" onclick="setAnim(5)">Morph</button>
+        <button id="an6" onclick="setAnim(6)">Cycle ★</button>
+      </div>
+      <div id="animDesc" class="anim-desc">Drag canvas to explore.</div>
+      <div class="ctrl" style="margin-top:8px"><label>Speed <span id="vAS">1.00</span></label>
+        <input type="range" min="0.05" max="3" step="0.05" value="1" oninput="U.animSpeed=+this.value;lbl('vAS',this.value)"></div>
+      <div class="ctrl"><label>Cycle Interval (s) <span id="vCI">12</span></label>
+        <input type="range" min="4" max="30" step="1" value="12" oninput="U.cycleInterval=+this.value;lbl('vCI',this.value)"></div>
+    </div>
+    <div class="section">
+      <div class="slabel">Export</div>
+      <div class="btn-row">
+        <button onclick="exportPNG()">PNG</button>
+        <button id="btnMesh" onclick="exportMesh()">OBJ Mesh <span style="font-size:8px">PSENT</span></button>
+      </div>
+      <div style="margin-top:8px">
+        <div class="slabel">Mesh Quality</div>
+        <div class="btn-row">
+          <button id="q32" onclick="setQ(32)">32</button>
+          <button id="q48" class="act" onclick="setQ(48)">48</button>
+          <button id="q64" onclick="setQ(64)">64</button>
+          <button id="q96" onclick="setQ(96)">96</button>
+        </div>
+      </div>
+      <div class="ctrl" style="margin-top:7px"><label>Range <span id="vSR">1.80</span></label>
+        <input type="range" min="1" max="4" step="0.05" value="1.8" oninput="U.sampleRange=+this.value;lbl('vSR',this.value)"></div>
+      <div id="expStat" style="font-size:10px;color:var(--text);margin-top:4px;min-height:14px"></div>
+    </div>
+    <div id="status">
+      <div>GL: <span id="stGL" class="er">-</span></div>
+      <div>Shader: <span id="stSH" class="er">-</span></div>
+      <div>Mode: <span id="stMO" class="ok">Mandelbox</span></div>
+      <div>Anim: <span id="stAN" class="ok">Off</span></div>
+      <div>FPS: <span id="stFP" class="ok">-</span></div>
+    </div>
+  </div>
+
+  <!-- DAPP -->
+  <div id="tab-dapp" class="tabpanel">
+    <div class="info-block">
+      <div class="info-h">Wallet</div>
+      <div class="warn">Wallet connect requires this file served from a real domain or opened locally — MetaMask doesn't inject into sandboxed previews.</div>
+      <div class="btn-row">
+        <button id="btnW" onclick="connectWallet()">Connect Wallet</button>
+        <button id="btnChain" style="display:none" onclick="switchToBase()">Switch to Base</button>
+      </div>
+      <div id="wInfo" style="display:none;margin-top:9px">
+        <div class="kv"><span class="k">Address</span><span class="v" id="wAddr">-</span></div>
+        <div class="kv"><span class="k">Chain</span><span class="v" id="wChain">-</span></div>
+      </div>
+      <div id="wErr" style="display:none;margin-top:7px" class="warn"></div>
+    </div>
+    <div class="info-block section">
+      <div class="info-h">Token Gate</div>
+      <div id="gateDisc" class="gate-box">Connect wallet on Base to check balances.</div>
+      <div id="gateInfo" style="display:none">
+        <div class="kv"><span class="k">PIEZ</span><span class="v" id="tPIEZ">-</span></div>
+        <div class="kv"><span class="k">PSENT</span><span class="v" id="tPSENT">-</span></div>
+        <div style="margin-top:7px">
+          <span id="b_iter12" class="badge locked">Iter 12</span>
+          <span id="b_iter16" class="badge locked">Iter 16</span>
+          <span id="b_api" class="badge locked">Shape API</span>
+          <span id="b_mesh" class="badge locked">OBJ Mesh</span>
+          <span id="b_mint" class="badge locked">Mint Prep</span>
+        </div>
+      </div>
+    </div>
+    <div class="info-block section">
+      <div class="info-h">Shape API</div>
+      <div id="shapeGate" class="gate-box">Requires PIEZ token + connected wallet.</div>
+      <div id="shapeUI" style="display:none">
+        <div class="slabel" style="margin-top:4px">Genesis Shape</div>
+        <select id="shapeSelect"><option value="">Loading…</option></select>
+        <div class="btn-row" style="margin-top:7px">
+          <button onclick="loadShapeCompute()">Load /compute</button>
+          <button onclick="loadShapeSignal()">Load /signal</button>
+        </div>
+        <div id="shapeStatus" style="font-size:10px;color:var(--text);margin-top:5px"></div>
+        <div id="shapeData" class="databox" style="display:none"></div>
+      </div>
+    </div>
+    <div class="info-block section">
+      <div class="info-h">Genesis Verify</div>
+      <div class="info-p" style="word-break:break-all;font-size:9px;color:var(--bright);line-height:1.9">cf114022b5e4e1d6fdeb36890f35f605857cf2de93b53ebcb9c8e5652413ca04</div>
+      <div class="btn-row" style="margin-top:5px">
+        <button onclick="verifyGenesis()">Verify via API</button>
+        <button onclick="window.open('https://basescan.org/block/47259953','_blank')">Block 47259953</button>
+      </div>
+      <div id="genesisResult" style="font-size:10px;margin-top:6px;color:var(--text)"></div>
+    </div>
+    <div class="info-block section">
+      <div class="info-h">NFT Metadata Prep <span style="font-size:9px;color:var(--dim)">PSENT</span></div>
+      <div id="mintGate" class="gate-box">Requires PSENT. Builds EIP-721 metadata from current render + params.</div>
+      <div id="mintUI" style="display:none">
+        <div class="btn-row">
+          <button onclick="prepareMint()">Snapshot + Build Metadata</button>
+        </div>
+        <div id="mintStatus" style="font-size:10px;color:var(--text);margin-top:6px"></div>
+        <div id="mintData" class="databox" style="display:none"></div>
+        <div class="btn-row" style="margin-top:7px">
+          <button id="btnCopyMeta" style="display:none" onclick="copyMeta()">Copy JSON</button>
+          <button id="btnBasescan" style="display:none" onclick="window.open('https://basescan.org/address/0xa14c3015E6b9Ad30337bD72c94Dc236835f61165','_blank')">NFT Contract</button>
+        </div>
+      </div>
+    </div>
+    <div class="info-block section">
+      <div class="info-h">Contracts · Base Mainnet</div>
+      <div class="kv"><span class="k">UUON</span><span class="v">0x29b056EF63867BECe07DA46c470aC168154EF275</span></div>
+      <div class="kv"><span class="k">PIEZ</span><span class="v">0xfb9c83432331EAf6f4a9D9488828823587d6f3da</span></div>
+      <div class="kv"><span class="k">PSENT</span><span class="v">0x985A1ebac4388DFb6EB4FE1171dCa9c6a5DB9cE7</span></div>
+      <div class="kv"><span class="k">NFT</span><span class="v">0xa14c3015E6b9Ad30337bD72c94Dc236835f61165</span></div>
+      <div class="btn-row" style="margin-top:6px">
+        <button onclick="window.open('https://basescan.org','_blank')">Basescan</button>
+        <button onclick="window.open('https://github.com/UUON-Foundation','_blank')">GitHub</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div id="tab-info" class="tabpanel">
+    <div class="info-block">
+      <div class="info-h">What This Engine Is</div>
+      <div class="info-p"><b>UUON Amazing Family</b> is a real-time <em>ray marching</em> fractal renderer running entirely on the GPU via <em>WebGL2 GLSL</em>. No polygon mesh — geometry is pure math, traced pixel by pixel every frame. Part of the <b>UUON PHRAMEWORK</b> anchored to Base Mainnet via genesis hash.</div>
+    </div>
+    <div class="info-block">
+      <div class="info-h">Ray Marching</div>
+      <div class="info-p">For every pixel, a ray fires from the camera and asks: <em>"how far to the nearest surface?"</em> A <b>Distance Estimator (DE)</b> answers. The ray steps forward by exactly that safe distance, asks again. When distance drops below a threshold, it has hit.</div>
+      <div class="kv"><span class="k">MAX_STEPS</span><span class="v">128–256 per ray before giving up</span></div>
+      <div class="kv"><span class="k">SURF_EPS</span><span class="v">Hit threshold — scales with iter depth</span></div>
+      <div class="kv"><span class="k">STEP_FAC</span><span class="v">0.5× safety — prevents overshooting</span></div>
+      <div class="kv"><span class="k">BOUND_R2</span><span class="v">Bounding sphere r=8 — outside skips DE</span></div>
+    </div>
+    <div class="info-block">
+      <div class="info-h">The Four Fractals</div>
+      <div class="kv"><span class="k">Mandelbox</span><span class="v">Tom Lowe, 2010. Box fold + full 3D sphere fold. Solid crystalline volumes.</span></div>
+      <div class="kv"><span class="k">Amaz Surf</span><span class="v">Knighty, 2011. XY-only sphere fold. Z escapes — infinite layered surfaces.</span></div>
+      <div class="kv"><span class="k">Surf Mod1</span><span class="v">Amaz Surf + fixed Julia offset. Breaks translational symmetry.</span></div>
+      <div class="kv"><span class="k">Box Julia</span><span class="v">Mandelbox with constant c. Reveals the attractor skeleton.</span></div>
+    </div>
+    <div class="info-block">
+      <div class="info-h">F=(P,E,M,R,C) Formulation</div>
+      <div class="kv"><span class="k">P</span><span class="v">{ mode, iter, scale, fold, minR, fixR } — 6 values ~48 bytes</span></div>
+      <div class="kv"><span class="k">E</span><span class="v">GLSL DE function applied per ray, per pixel, every frame</span></div>
+      <div class="kv"><span class="k">M</span><span class="v">Compile-time MODE dispatch + upU() uniform chain — maps P to GPU behavior</span></div>
+      <div class="kv"><span class="k">R</span><span class="v">WebGL2 framebuffer (live) · PNG · OBJ mesh with vertex normals</span></div>
+      <div class="kv"><span class="k">C</span><span class="v">P=48B → R≈180KB–2MB → C≈3,750:1 to 40,000:1</span></div>
+    </div>
+    <div class="info-block">
+      <div class="info-h">dApp Layer</div>
+      <div class="kv"><span class="k">PIEZ</span><span class="v">Computation key → Iter 12 + Shape API</span></div>
+      <div class="kv"><span class="k">PSENT</span><span class="v">Intelligence key → Iter 16 + OBJ + Mint prep</span></div>
+      <div class="info-p" style="margin-top:5px"><span class="tag">WebGL2</span><span class="tag">GLSL 300es</span><span class="tag">ethers v6</span><span class="tag">Base Mainnet</span><span class="tag">No framework</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="cv">
+  <canvas id="glc"></canvas>
+  <div id="cycleFlash"></div>
+  <div id="errbox"></div>
+  <div id="engStatus">loading engine core…</div>
+  <div id="dloverlay">
+    <div class="dlbox">
+      <div class="dltitle">Export Ready</div>
+      <a class="dlbtn" id="dlLink" href="#" target="_blank">Open File</a>
+      <div class="dlhint" id="dlHint"></div>
+      <button class="dlclose" onclick="closeDL()">[ dismiss ]</button>
+    </div>
+  </div>
+  <div id="bar">UUON · Amazing Family ·
+    <span id="bMO">Mandelbox</span> ·
+    <span id="bAN">OFF</span> ·
+    <span id="bGate">NO WALLET</span> ·
+    <span id="bFP">- fps</span>
+  </div>
+</div>
+</div>
+
+<script>
+// ── PUBLIC SHELL — calls window.AFE.* (Amazing Family Engine namespace)
+// Engine core served from https://uuon.world/engine/amazing-family/core.js
+
+var MN=['Mandelbox','AmazSurf','SurfMod1','BoxJulia'];
+var ANAMES=['Off','Orbit','Spiral','Dive','Cinema','Morph','Cycle'];
+var ADESCS=[
+  'Drag canvas to explore manually.',
+  'Constant Y-axis rotation — equatorial slice.',
+  'Yaw + oscillating pitch — sweeps top to bottom, revealing vertical structure.',
+  'Camera breathes 2×–11× while angle drifts — exposes scale hierarchy.',
+  'Lissajous figure-8 across full sphere + breathing distance. No angle repeated.',
+  'Cinema path + scale oscillates ±0.6. Watch the fractal continuously reshape.',
+  'Cinema path + auto-cycles through all 4 fractal modes at set interval. Each switch flashes white.'
+];
+var API='https://distinguished-rebirth-production.up.railway.app';
+var BASE_CHAIN=8453n;
+var PIEZ_ADDR='0xfb9c83432331EAf6f4a9D9488828823587d6f3da';
+var PSENT_ADDR='0x985A1ebac4388DFb6EB4FE1171dCa9c6a5DB9cE7';
+var ERC20=['function balanceOf(address) view returns (uint256)','function decimals() view returns (uint8)'];
+
+var U={
+  mode:0,iter:8,
+  mbScale:-1.5,mbFold:1,mbMinR:0.5,mbFixR:1,
+  sScale:-1.78,sFold:1,sMinR:0.5,sFixR:1,
+  m1Scale:-1.78,m1Fold:1,m1JX:0.1,m1JY:0.3,m1JZ:0,
+  bjScale:-1.5,bjFold:1,bjCx:0.2,bjCy:-0.4,bjCz:0.1,
+  camDist:5,fov:1,ambient:0.18,diffuse:0.85,specular:0.4,aoStr:0.6,
+  colorMode:0,animMode:0,animSpeed:1,cycleInterval:12,
+  quality:48,sampleRange:1.8
+};
+var WS={connected:false,addr:null,provider:null,piez:0n,psent:0n,onBase:false};
+var mouse={down:false,x:0,y:0,yaw:0,pitch:0.35};
+var morphBase={};
+var animT=0,lastCycleMs=0,_metaJSON=null;
+var _balanceInterval=null;
+
+function gid(s){return document.getElementById(s);}
+function lbl(id,v){var e=gid(id);if(e)e.textContent=parseFloat(v).toFixed(2);}
+function short(a){return a.slice(0,6)+'…'+a.slice(-4);}
+
+function switchTab(t){
+  ['ctrl','dapp','info'].forEach(function(n){gid('tab-'+n).classList.toggle('vis',n===t);});
+  document.querySelectorAll('.tab').forEach(function(b,i){b.classList.toggle('act',['ctrl','dapp','info'][i]===t);});
+}
+
+function checkEngine(){
+  var ok=typeof window.AFE!=='undefined';
+  gid('engStatus').textContent=ok?'':'engine core unavailable — check uuon.world';
+  gid('engStatus').style.display=ok?'none':'block';
+  return ok;
+}
+
+function setMode(n){
+  U.mode=n;
+  for(var i=0;i<4;i++){gid('m'+i).classList.toggle('act',i===n);gid('p'+i).classList.toggle('vis',i===n);}
+  gid('stMO').textContent=MN[n];gid('bMO').textContent=MN[n];
+  if(U.animMode===5){morphBase={mb:U.mbScale,as:U.sScale,m1:U.m1Scale,bj:U.bjScale,m1JX:U.m1JX,m1JY:U.m1JY,bjCx:U.bjCx,bjCy:U.bjCy};}
+  rebuildShader();
+}
+function setIter(n){U.iter=n;[6,8,12,16].forEach(function(i){gid('it'+i).classList.toggle('act',i===n);});rebuildShader();}
+function setColor(n){U.colorMode=n;[0,1,2].forEach(function(i){gid('c'+i).classList.toggle('act',i===n);});}
+function setQ(n){U.quality=n;[32,48,64,96].forEach(function(q){gid('q'+q).classList.toggle('act',q===n);});}
+
+function setAnim(n){
+  U.animMode=n;
+  for(var i=0;i<=6;i++)gid('an'+i).classList.toggle('act',i===n);
+  var d=gid('animDesc');d.textContent=ADESCS[n];d.classList.toggle('on',n>0);
+  gid('stAN').textContent=ANAMES[n];gid('bAN').textContent=ANAMES[n].toUpperCase();
+  if(n===5)morphBase={mb:U.mbScale,as:U.sScale,m1:U.m1Scale,bj:U.bjScale,m1JX:U.m1JX,m1JY:U.m1JY,bjCx:U.bjCx,bjCy:U.bjCy};
+  if(n===6)lastCycleMs=performance.now();
+  animT=0;
+}
+
+function doFlash(cb){
+  var f=gid('cycleFlash');
+  f.style.transition='none';f.style.opacity='0.85';f.style.display='block';
+  requestAnimationFrame(function(){
+    setTimeout(function(){
+      if(cb)cb();
+      f.style.transition='opacity .35s';
+      requestAnimationFrame(function(){f.style.opacity='0';setTimeout(function(){f.style.display='none';},380);});
+    },20);
+  });
+}
+
+function applyGate(){
+  var hasPIEZ=WS.connected&&WS.onBase&&WS.piez>0n;
+  var hasPSENT=WS.connected&&WS.onBase&&WS.psent>0n;
+  gid('it12').disabled=!hasPIEZ;gid('it16').disabled=!hasPSENT;
+  if(U.iter===12&&!hasPIEZ)setIter(8);
+  if(U.iter===16&&!hasPSENT)setIter(hasPIEZ?12:8);
+  gid('btnMesh').disabled=!hasPSENT;
+  function badge(id,has,cls){gid(id).className='badge '+(has?cls:'locked');}
+  badge('b_iter12',hasPIEZ,'piez');badge('b_iter16',hasPSENT,'psent');
+  badge('b_api',hasPIEZ,'piez');badge('b_mesh',hasPSENT,'psent');badge('b_mint',hasPSENT,'psent');
+  gid('shapeUI').style.display=hasPIEZ?'block':'none';gid('shapeGate').style.display=hasPIEZ?'none':'block';
+  gid('mintUI').style.display=hasPSENT?'block':'none';gid('mintGate').style.display=hasPSENT?'none':'block';
+  var g=WS.connected?(!WS.onBase?'WRONG CHAIN':hasPSENT?'PSENT+PIEZ':hasPIEZ?'PIEZ':'NO TOKENS'):'NO WALLET';
+  gid('bGate').textContent=g;
+}
+
+async function connectWallet(){
+  if(typeof ethers==='undefined'){showWErr('ethers.js failed to load.');return;}
+  if(!window.ethereum){showWErr('No wallet detected. Install MetaMask and open this file locally.');return;}
+  try{
+    gid('btnW').textContent='Connecting…';
+    WS.provider=new ethers.BrowserProvider(window.ethereum);
+    await WS.provider.send('eth_requestAccounts',[]);
+    var signer=await WS.provider.getSigner();
+    WS.addr=await signer.getAddress();
+    var net=await WS.provider.getNetwork();
+    WS.onBase=(net.chainId===BASE_CHAIN);
+    gid('wInfo').style.display='block';
+    gid('wAddr').textContent=short(WS.addr);
+    gid('wChain').textContent=WS.onBase?'Base Mainnet ✓':'Chain '+net.chainId+' (need Base)';
+    gid('btnChain').style.display=WS.onBase?'none':'inline-block';
+    gid('btnW').textContent=short(WS.addr);
+    WS.connected=true;gid('gateDisc').style.display='none';gid('gateInfo').style.display='block';
+    if(WS.onBase){await fetchBalances();fetchShapeList();}
+    applyGate();hideWErr();
+    if(_balanceInterval)clearInterval(_balanceInterval);
+    _balanceInterval=setInterval(function(){if(WS.connected&&WS.onBase)fetchBalances().then(applyGate);},30000);
+    window.addEventListener('focus',function(){if(WS.connected&&WS.onBase)fetchBalances().then(applyGate);});
+  }catch(e){showWErr('Error: '+e.message);gid('btnW').textContent='Connect Wallet';}
+}
+async function switchToBase(){
+  if(!window.ethereum)return;
+  try{await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x2105'}]});}
+  catch(e){if(e.code===4902)await window.ethereum.request({method:'wallet_addEthereumChain',params:[{
+    chainId:'0x2105',chainName:'Base',nativeCurrency:{name:'Ethereum',symbol:'ETH',decimals:18},
+    rpcUrls:['https://mainnet.base.org'],blockExplorerUrls:['https://basescan.org']}]});}
+  if(WS.provider){var net=await WS.provider.getNetwork();WS.onBase=net.chainId===BASE_CHAIN;}
+  gid('btnChain').style.display=WS.onBase?'none':'inline-block';
+  if(WS.onBase){await fetchBalances();fetchShapeList();}
+  applyGate();
+}
+async function fetchBalances(){
+  if(!WS.provider||!WS.addr)return;
+  try{
+    var pc=new ethers.Contract(PIEZ_ADDR,ERC20,WS.provider);
+    var sc=new ethers.Contract(PSENT_ADDR,ERC20,WS.provider);
+    WS.piez=await pc.balanceOf(WS.addr);WS.psent=await sc.balanceOf(WS.addr);
+    var pd=await pc.decimals(),sd=await sc.decimals();
+    gid('tPIEZ').textContent=ethers.formatUnits(WS.piez,pd)+' PIEZ'+(WS.piez>0n?' ✓':'');
+    gid('tPSENT').textContent=ethers.formatUnits(WS.psent,sd)+' PSENT'+(WS.psent>0n?' ✓':'');
+  }catch(e){gid('tPIEZ').textContent='Error: '+e.message.slice(0,40);}
+}
+function showWErr(m){var e=gid('wErr');e.style.display='block';e.textContent=m;}
+function hideWErr(){gid('wErr').style.display='none';}
+
+async function fetchShapeList(){
+  try{
+    var r=await fetch(API+'/api/shapes');var shapes=await r.json();
+    var sel=gid('shapeSelect');sel.innerHTML='<option value="">Select a shape…</option>';
+    var list=Array.isArray(shapes)?shapes:(shapes.shapes||shapes.data||[]);
+    list.forEach(function(s){var o=document.createElement('option');o.value=s.id||s.slug||s.name;o.textContent='[L'+s.level+'] '+(s.name||s.id);sel.appendChild(o);});
+    gid('shapeStatus').textContent=list.length+' shapes loaded';
+  }catch(e){gid('shapeStatus').textContent='API: '+e.message.slice(0,60);}
+}
+async function loadShapeCompute(){
+  var id=gid('shapeSelect').value;if(!id){gid('shapeStatus').textContent='Select a shape.';return;}
+  gid('shapeStatus').textContent='Fetching…';
+  try{
+    var r=await fetch(API+'/api/shapes/'+encodeURIComponent(id)+'/compute?address='+WS.addr);
+    var data=await r.json();var box=gid('shapeData');box.style.display='block';box.textContent=JSON.stringify(data,null,2);
+    gid('shapeStatus').textContent='/compute loaded';tryApplyShapeParams(data);
+  }catch(e){gid('shapeStatus').textContent='Error: '+e.message.slice(0,80);}
+}
+async function loadShapeSignal(){
+  var id=gid('shapeSelect').value;if(!id){gid('shapeStatus').textContent='Select a shape.';return;}
+  gid('shapeStatus').textContent='Fetching /signal…';
+  try{
+    var r=await fetch(API+'/api/shapes/'+encodeURIComponent(id)+'/signal?address='+WS.addr);
+    var data=await r.json();var box=gid('shapeData');box.style.display='block';box.textContent=JSON.stringify(data,null,2);
+    gid('shapeStatus').textContent='/signal loaded';
+  }catch(e){gid('shapeStatus').textContent='Error: '+e.message.slice(0,80);}
+}
+function tryApplyShapeParams(d){
+  var map={scale:'mbScale',fold:'mbFold',min_radius:'mbMinR',fixed_radius:'mbFixR'};
+  Object.keys(map).forEach(function(k){if(d[k]!==undefined)U[map[k]]=parseFloat(d[k]);});
+  if(d.params)tryApplyShapeParams(d.params);
+}
+async function verifyGenesis(){
+  gid('genesisResult').textContent='Verifying…';
+  try{
+    var r=await fetch(API+'/api/genesis/verify');var data=await r.json();
+    var known='cf114022b5e4e1d6fdeb36890f35f605857cf2de93b53ebcb9c8e5652413ca04';
+    var str=JSON.stringify(data);
+    gid('genesisResult').textContent=str.includes(known)?'✓ HASH MATCH':'Response: '+str.slice(0,100);
+    gid('genesisResult').style.color=str.includes(known)?'#226600':'#cc2222';
+  }catch(e){gid('genesisResult').textContent='API error (CORS from preview): '+e.message.slice(0,60);}
+}
+async function prepareMint(){
+  gid('mintStatus').textContent='Capturing…';
+  if(PROG&&VAO&&gl){gl.useProgram(PROG);gl.bindVertexArray(VAO);upU();gl.drawArrays(gl.TRIANGLES,0,6);}
+  var img=canvas.toDataURL('image/png');
+  var activeScale=U.mode===0?U.mbScale:U.mode===1?U.sScale:U.mode===2?U.m1Scale:U.bjScale;
+  var meta={name:'UUON '+MN[U.mode]+' #'+Date.now(),
+    description:'UUON Amazing Family fractal. Mode: '+MN[U.mode]+', Iter: '+U.iter+'. UUON Foundation Mathematical Operating System, Base Mainnet.',
+    image:img.slice(0,64)+'… [full base64 PNG — upload to IPFS]',
+    external_url:'https://github.com/UUON-Foundation',
+    genesis_hash:'cf114022b5e4e1d6fdeb36890f35f605857cf2de93b53ebcb9c8e5652413ca04',
+    attributes:[{trait_type:'Fractal Mode',value:MN[U.mode]},{trait_type:'Iterations',value:U.iter},
+      {trait_type:'Color',value:['Ink','Sepia','Slate'][U.colorMode]},{trait_type:'Scale',value:activeScale},
+      {trait_type:'Engine',value:'UUON Amazing Family v1'}]};
+  _metaJSON=JSON.stringify(meta,null,2);
+  var box=gid('mintData');box.style.display='block';box.textContent=_metaJSON;
+  gid('mintStatus').textContent='Done. Upload image+JSON to IPFS, mint via UUON contract.';
+  gid('btnCopyMeta').style.display='inline-block';gid('btnBasescan').style.display='inline-block';
+}
+function copyMeta(){if(_metaJSON)navigator.clipboard.writeText(_metaJSON).then(function(){gid('mintStatus').textContent='Copied.';})}
+
+// ── ANIMATION ──
+function tickAnim(dt,now){
+  if(U.animMode===0)return;
+  var s=U.animSpeed,t=animT;animT+=dt*s;
+  if(U.animMode===1){mouse.yaw+=dt*s*0.4;}
+  else if(U.animMode===2){mouse.yaw+=dt*s*0.35;mouse.pitch=0.72*Math.sin(t*0.28*s);}
+  else if(U.animMode===3){
+    mouse.yaw+=dt*s*0.22;mouse.pitch=0.38*Math.sin(t*0.19*s);
+    U.camDist=Math.max(0.6,Math.min(12,2+4.5*(1+Math.sin(t*0.13*s-Math.PI/2))*.5+4.5*(.5+.5*Math.sin(t*0.07*s))));
+    var sl=gid('camSlider');if(sl){sl.value=U.camDist;lbl('vCD',U.camDist);}
+  }else if(U.animMode>=4){
+    mouse.yaw=t*s*0.18+0.55*Math.sin(t*s*0.63);
+    mouse.pitch=0.52*Math.sin(t*s*0.37)+0.18*Math.sin(t*s*1.09);
+    U.camDist=Math.max(0.8,Math.min(14,5.5+3.2*Math.sin(t*s*0.21)));
+    var sl=gid('camSlider');if(sl){sl.value=U.camDist;lbl('vCD',U.camDist);}
+    if(U.animMode===5){
+      var sc=0.6*Math.sin(t*s*0.23),m=U.mode;
+      if(m===0){U.mbScale=Math.max(-3,Math.min(-1,(morphBase.mb||U.mbScale)+sc));var e=gid('slMBSc');if(e){e.value=U.mbScale;lbl('vSc',U.mbScale);}}
+      else if(m===1){U.sScale=Math.max(-3,Math.min(-1,(morphBase.as||U.sScale)+sc));var e=gid('slASSc');if(e){e.value=U.sScale;lbl('vSSc',U.sScale);}}
+      else if(m===2){U.m1Scale=Math.max(-3,Math.min(-1,(morphBase.m1||U.m1Scale)+sc));var e=gid('slM1Sc');if(e){e.value=U.m1Scale;lbl('vM1Sc',U.m1Scale);}
+        U.m1JX=(morphBase.m1JX||0.1)+0.25*Math.sin(t*s*0.17);U.m1JY=(morphBase.m1JY||0.3)+0.25*Math.cos(t*s*0.13);}
+      else if(m===3){U.bjScale=Math.max(-3,Math.min(-1,(morphBase.bj||U.bjScale)+sc));var e=gid('slBJSc');if(e){e.value=U.bjScale;lbl('vBJSc',U.bjScale);}
+        U.bjCx=(morphBase.bjCx||0.2)+0.3*Math.sin(t*s*0.19);U.bjCy=(morphBase.bjCy||-0.4)+0.3*Math.cos(t*s*0.23);}
+    }else if(U.animMode===6){
+      var intMs=U.cycleInterval*1000;
+      if(now-lastCycleMs>intMs){
+        lastCycleMs=now+intMs;
+        var next=(U.mode+1)%4;
+        doFlash(function(){setMode(next);});
+      }
+    }
+  }
+}
+
+// ── WEBGL2 — renderer shell, calls window.AFE.* for all computation ──
+var canvas=gid('glc'),errbox=gid('errbox');
+var gl=canvas.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+if(!gl){errbox.style.display='block';errbox.textContent='WebGL2 unavailable.';}
+else{gid('stGL').textContent='OK';gid('stGL').className='ok';}
+
+var VS=`#version 300 es
+precision highp float;
+in vec2 aPos;out vec2 vUV;
+void main(){vUV=aPos;gl_Position=vec4(aPos,0.,1.);}`;
+
+var PROG=null,VAO=null,UL={};
+var UN=['uRes','uCamDist','uYaw','uPitch','uFov','uAmbient','uDiffuse','uSpecular','uAoStr','uColorMode',
+  'uMBScale','uMBFold','uMBMinR','uMBFixR',
+  'uSScale','uSFold','uSMinR','uSFixR',
+  'uM1Scale','uM1Fold','uM1JX','uM1JY','uM1JZ',
+  'uBJScale','uBJFold','uBJCx','uBJCy','uBJCz'];
+var qbuf=gl?gl.createBuffer():null;
+if(gl){gl.bindBuffer(gl.ARRAY_BUFFER,qbuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,-1,1,1,-1,1]),gl.STATIC_DRAW);}
+
+function cSh(t,s){
+  var sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);
+  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){var e=gl.getShaderInfoLog(sh);gl.deleteShader(sh);return{s:null,e:e};}
+  return{s:sh,e:null};
+}
+function lkP(vs,fs){
+  var vr=cSh(gl.VERTEX_SHADER,vs);if(vr.e)return{p:null,e:'V:'+vr.e};
+  var fr=cSh(gl.FRAGMENT_SHADER,fs);if(fr.e){gl.deleteShader(vr.s);return{p:null,e:'F:'+fr.e};}
+  var p=gl.createProgram();gl.attachShader(p,vr.s);gl.attachShader(p,fr.s);gl.linkProgram(p);
+  gl.deleteShader(vr.s);gl.deleteShader(fr.s);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){var e=gl.getProgramInfoLog(p);gl.deleteProgram(p);return{p:null,e:'L:'+e};}
+  return{p:p,e:null};
+}
+
+function rebuildShader(){
+  if(!gl)return;
+  if(!checkEngine()){errbox.style.display='block';errbox.textContent='Engine core not loaded.\nCheck https://uuon.world/engine/amazing-family/core.js';return;}
+  gid('stSH').textContent='compiling…';gid('stSH').className='er';
+  var fs=window.AFE.buildFS(U.mode,U.iter);
+  var r=lkP(VS,fs);
+  if(r.e){errbox.style.display='block';errbox.textContent='SHADER ERR\n'+r.e;gid('stSH').textContent='FAILED';return;}
+  if(PROG)gl.deleteProgram(PROG);if(VAO)gl.deleteVertexArray(VAO);
+  errbox.style.display='none';PROG=r.p;gl.useProgram(PROG);UL={};
+  for(var i=0;i<UN.length;i++)UL[UN[i]]=gl.getUniformLocation(PROG,UN[i]);
+  VAO=gl.createVertexArray();gl.bindVertexArray(VAO);gl.bindBuffer(gl.ARRAY_BUFFER,qbuf);
+  var loc=gl.getAttribLocation(PROG,'aPos');gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);gl.bindVertexArray(null);
+  gid('stSH').textContent='OK · '+MN[U.mode];gid('stSH').className='ok';
+}
+
+var rst=null;
+function resize(){
+  if(!gl)return;
+  var dpr=Math.min(window.devicePixelRatio||1,1.5),w=gid('cv');
+  var W=Math.floor(w.clientWidth*dpr),H=Math.floor(w.clientHeight*dpr);
+  if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;gl.viewport(0,0,W,H);}
+}
+window.addEventListener('resize',function(){clearTimeout(rst);rst=setTimeout(resize,16);});
+
+canvas.addEventListener('mousedown',function(e){e.preventDefault();if(U.animMode>0)setAnim(0);mouse.down=true;mouse.x=e.clientX;mouse.y=e.clientY;});
+document.addEventListener('mouseup',function(){mouse.down=false;});
+document.addEventListener('mousemove',function(e){
+  if(!mouse.down)return;
+  mouse.yaw+=(e.clientX-mouse.x)*.007;mouse.pitch+=(e.clientY-mouse.y)*.007;
+  mouse.pitch=Math.max(-1.4,Math.min(1.4,mouse.pitch));mouse.x=e.clientX;mouse.y=e.clientY;});
+canvas.addEventListener('wheel',function(e){
+  e.preventDefault();
+  U.camDist=Math.max(.5,Math.min(20,U.camDist+(e.deltaMode===0?e.deltaY*.003:e.deltaY*.2)));
+  var sl=gid('camSlider');if(sl){sl.value=U.camDist;lbl('vCD',U.camDist);}},{passive:false});
+var ltch=null;
+canvas.addEventListener('touchstart',function(e){if(U.animMode>0)setAnim(0);if(e.touches.length===1){mouse.down=true;mouse.x=e.touches[0].clientX;mouse.y=e.touches[0].clientY;}ltch=null;},{passive:false});
+canvas.addEventListener('touchend',function(){mouse.down=false;ltch=null;},{passive:true});
+canvas.addEventListener('touchmove',function(e){
+  e.preventDefault();
+  if(e.touches.length===1&&mouse.down){mouse.yaw+=(e.touches[0].clientX-mouse.x)*.005;mouse.pitch+=(e.touches[0].clientY-mouse.y)*.005;mouse.pitch=Math.max(-1.4,Math.min(1.4,mouse.pitch));mouse.x=e.touches[0].clientX;mouse.y=e.touches[0].clientY;}
+  else if(e.touches.length===2){var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(ltch!==null){U.camDist=Math.max(.5,Math.min(20,U.camDist-(d-ltch)*.01));var sl=gid('camSlider');if(sl){sl.value=U.camDist;lbl('vCD',U.camDist);}}ltch=d;}},{passive:false});
+
+function upU(){
+  var g=gl;
+  g.uniform2f(UL.uRes,canvas.width,canvas.height);g.uniform1f(UL.uCamDist,U.camDist);
+  g.uniform1f(UL.uYaw,mouse.yaw);g.uniform1f(UL.uPitch,mouse.pitch);g.uniform1f(UL.uFov,U.fov);
+  g.uniform1f(UL.uAmbient,U.ambient);g.uniform1f(UL.uDiffuse,U.diffuse);g.uniform1f(UL.uSpecular,U.specular);
+  g.uniform1f(UL.uAoStr,U.aoStr);g.uniform1i(UL.uColorMode,U.colorMode);
+  g.uniform1f(UL.uMBScale,U.mbScale);g.uniform1f(UL.uMBFold,U.mbFold);g.uniform1f(UL.uMBMinR,U.mbMinR);g.uniform1f(UL.uMBFixR,U.mbFixR);
+  g.uniform1f(UL.uSScale,U.sScale);g.uniform1f(UL.uSFold,U.sFold);g.uniform1f(UL.uSMinR,U.sMinR);g.uniform1f(UL.uSFixR,U.sFixR);
+  g.uniform1f(UL.uM1Scale,U.m1Scale);g.uniform1f(UL.uM1Fold,U.m1Fold);g.uniform1f(UL.uM1JX,U.m1JX);g.uniform1f(UL.uM1JY,U.m1JY);g.uniform1f(UL.uM1JZ,U.m1JZ);
+  g.uniform1f(UL.uBJScale,U.bjScale);g.uniform1f(UL.uBJFold,U.bjFold);g.uniform1f(UL.uBJCx,U.bjCx);g.uniform1f(UL.uBJCy,U.bjCy);g.uniform1f(UL.uBJCz,U.bjCz);
+}
+
+var lastNow=performance.now(),frames=0,lastFPS=performance.now();
+function render(now){
+  requestAnimationFrame(render);
+  if(!PROG||!VAO||!gl)return;
+  var dt=Math.min((now-lastNow)*.001,.05);lastNow=now;
+  tickAnim(dt,now);resize();
+  gl.useProgram(PROG);gl.bindVertexArray(VAO);upU();gl.drawArrays(gl.TRIANGLES,0,6);
+  frames++;
+  if(now-lastFPS>=500){var fps=Math.round(frames*1000/(now-lastFPS));frames=0;lastFPS=now;gid('stFP').textContent=fps+' fps';gid('bFP').textContent=fps+' fps';}
+}
+
+var _burl=null;
+function showDL(href,fname,hint){if(_burl&&_burl.startsWith('blob:'))URL.revokeObjectURL(_burl);_burl=href;var lnk=gid('dlLink');lnk.href=href;lnk.download=fname;lnk.textContent=fname;gid('dlHint').textContent=hint;gid('dloverlay').classList.add('vis');}
+function closeDL(){gid('dloverlay').classList.remove('vis');}
+function exportPNG(){if(PROG&&VAO&&gl){gl.useProgram(PROG);gl.bindVertexArray(VAO);upU();gl.drawArrays(gl.TRIANGLES,0,6);}showDL(canvas.toDataURL('image/png'),'uuon_'+MN[U.mode].toLowerCase()+'_i'+U.iter+'.png','Right-click → Save Image As');}
+
+// OBJ export — CPU DE calls routed through window.AFE
+function tkk(){return new Promise(function(r){setTimeout(r,0);});}
+async function exportMesh(){
+  if(!checkEngine())return;
+  var N=U.quality,RANGE=U.sampleRange;
+  if(N>=96&&U.iter>8){gid('expStat').textContent='Warning: quality 96 + iter '+U.iter+' may take 30s+. Starting…';await tkk();}
+  var btn=gid('btnMesh'),st=gid('expStat');btn.disabled=true;
+  var step=(RANGE*2)/N,NP=N+1,ISO=step*0.35;
+  var estTime=Math.round((N*N*N*U.iter)/5000000);
+  st.textContent='Sampling '+N+'^3 (~'+Math.max(1,estTime)+'s est)…';await tkk();
+  var grid=new Float32Array(NP*NP*NP);
+  var G=function(x,y,z){return x*NP*NP+y*NP+z;};
+  var yn=Math.max(1,N>>4);
+  for(var xi=0;xi<NP;xi++){
+    var wx=-RANGE+xi*step;
+    for(var yi=0;yi<NP;yi++){var wy=-RANGE+yi*step;for(var zi=0;zi<NP;zi++)grid[G(xi,yi,zi)]=window.AFE.jDE(U,wx,wy,-RANGE+zi*step);}
+    if((xi%yn)===0){st.textContent='Sampling '+Math.round(xi/N*60)+'%';await tkk();}
+  }
+  var CV=new Int32Array(N*N*N).fill(-1);var Ci=function(x,y,z){return x*N*N+y*N+z;};
+  var vx=[],vy=[],vz2=[];
+  for(var ax=0;ax<N;ax++){
+    for(var ay=0;ay<N;ay++){
+      for(var az=0;az<N;az++){
+        var v=[];for(var k=0;k<8;k++){var CO=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];v[k]=grid[G(ax+CO[k][0],ay+CO[k][1],az+CO[k][2])];}
+        var hi=false,ho=false;for(var k=0;k<8;k++){if(v[k]<ISO)hi=true;else ho=true;}
+        if(!hi||!ho)continue;
+        var EA=[0,1,2,3,0,1,2,3,0,1,2,3],EB=[1,2,3,0,5,6,7,4,4,5,6,7];
+        var CO2=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+        var sx=0,sy=0,sz=0,sn=0;
+        for(var e=0;e<12;e++){var ia=EA[e],ib=EB[e],va=v[ia],vb=v[ib];if((va<ISO)===(vb<ISO))continue;var t2=Math.abs(va-vb)<1e-9?.5:(ISO-va)/(vb-va);var ca=CO2[ia],cb=CO2[ib];sx+=(ax+ca[0])+t2*((ax+cb[0])-(ax+ca[0]));sy+=(ay+ca[1])+t2*((ay+cb[1])-(ay+ca[1]));sz+=(az+ca[2])+t2*((az+cb[2])-(az+ca[2]));sn++;}
+        if(!sn)continue;CV[Ci(ax,ay,az)]=vx.length;vx.push(-RANGE+(sx/sn)*step);vy.push(-RANGE+(sy/sn)*step);vz2.push(-RANGE+(sz/sn)*step);
+      }
+    }
+    if((ax%yn)===0){st.textContent='Verts '+Math.round(ax/N*25+60)+'% ('+vx.length+')';await tkk();}
+  }
+  var nh=step*0.5;var nx=[],ny_n=[],nz_n=[];
+  for(var i=0;i<vx.length;i++){
+    var px2=vx[i],py2=vy[i],pz2=vz2[i];
+    var gx2=window.AFE.jDE(U,px2+nh,py2,pz2)-window.AFE.jDE(U,px2-nh,py2,pz2);
+    var gy2=window.AFE.jDE(U,px2,py2+nh,pz2)-window.AFE.jDE(U,px2,py2-nh,pz2);
+    var gz2=window.AFE.jDE(U,px2,py2,pz2+nh)-window.AFE.jDE(U,px2,py2,pz2-nh);
+    var len=Math.sqrt(gx2*gx2+gy2*gy2+gz2*gz2)||1;nx.push(gx2/len);ny_n.push(gy2/len);nz_n.push(gz2/len);
+  }
+  var faces=[];
+  function quad(a,b,c,d,flip){if(a<0||b<0||c<0||d<0)return;if(!flip){faces.push([a+1,b+1,c+1]);faces.push([a+1,c+1,d+1]);}else{faces.push([a+1,c+1,b+1]);faces.push([a+1,d+1,c+1]);}}
+  var CO3=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+  for(var gx=0;gx<N;gx++)for(var gy=1;gy<N;gy++)for(var gz=1;gz<N;gz++){var va2=grid[G(gx,gy,gz)],vb2=grid[G(gx+1,gy,gz)];if((va2<ISO)===(vb2<ISO))continue;quad(CV[Ci(gx,gy,gz)],CV[Ci(gx,gy-1,gz)],CV[Ci(gx,gy-1,gz-1)],CV[Ci(gx,gy,gz-1)],va2<ISO);}
+  for(var gx=1;gx<N;gx++)for(var gy=0;gy<N;gy++)for(var gz=1;gz<N;gz++){var va2=grid[G(gx,gy,gz)],vb2=grid[G(gx,gy+1,gz)];if((va2<ISO)===(vb2<ISO))continue;quad(CV[Ci(gx,gy,gz)],CV[Ci(gx-1,gy,gz)],CV[Ci(gx-1,gy,gz-1)],CV[Ci(gx,gy,gz-1)],va2>=ISO);}
+  for(var gx=1;gx<N;gx++)for(var gy=1;gy<N;gy++)for(var gz=0;gz<N;gz++){var va2=grid[G(gx,gy,gz)],vb2=grid[G(gx,gy,gz+1)];if((va2<ISO)===(vb2<ISO))continue;quad(CV[Ci(gx,gy,gz)],CV[Ci(gx-1,gy,gz)],CV[Ci(gx-1,gy-1,gz)],CV[Ci(gx,gy-1,gz)],va2<ISO);}
+  var nv=vx.length,nf=faces.length;st.textContent='Writing '+nv+'v '+nf+'f…';await tkk();
+  var lines=['# UUON Amazing Family Engine','# Mode: '+MN[U.mode]+'  Iter: '+U.iter,'# Verts: '+nv+'  Tris: '+nf,'# UUON Foundation Inc. — Phillip Aguilar Ruiz III','# License: USAL-1.0','g uuon_amazing_'+MN[U.mode].toLowerCase(),''];
+  for(var i=0;i<nv;i++)lines.push('v '+vx[i].toFixed(5)+' '+vy[i].toFixed(5)+' '+vz2[i].toFixed(5));
+  lines.push('');for(var i=0;i<nv;i++)lines.push('vn '+nx[i].toFixed(5)+' '+ny_n[i].toFixed(5)+' '+nz_n[i].toFixed(5));lines.push('');
+  for(var i=0;i<nf;i++){var f=faces[i];lines.push('f '+f[0]+'//'+f[0]+' '+f[1]+'//'+f[1]+' '+f[2]+'//'+f[2]);}
+  var blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  var fname='uuon_'+MN[U.mode].toLowerCase()+'_i'+U.iter+'_q'+N+'.obj';
+  st.textContent='Done: '+nv.toLocaleString()+'v · '+nf.toLocaleString()+'f · normals included';
+  btn.disabled=!(WS.psent>0n);showDL(URL.createObjectURL(blob),fname,'Right-click → Save Link As');
+}
+
+// ── INIT ──
+if(gl){
+  resize();
+  // Wait for AFE core to load, then build shader
+  function tryInit(){
+    if(typeof window.AFE!=='undefined'){
+      checkEngine();rebuildShader();requestAnimationFrame(render);
+    }else{
+      setTimeout(tryInit,100);
+    }
+  }
+  tryInit();
+}
+applyGate();
+</script>
+</body>
+</html>

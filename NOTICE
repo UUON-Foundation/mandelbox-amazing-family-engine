@@ -1,0 +1,47 @@
+UUON Amazing Family Engine
+Copyright (c) 2026 Phillip Aguilar Ruiz III / UUON Foundation Inc.
+
+ORIGIN STATEMENT
+----------------
+This engine was designed and implemented by Phillip Aguilar Ruiz III.
+Licensed under USAL-1.0. All architectural decisions, the compile-time
+MODE dispatch system, the XY-only sphere fold correction, the CPU DE
+mirror architecture, and the F=(P,E,M,R,C) formulation are original work.
+
+PUBLIC / PROPRIETARY SPLIT
+---------------------------
+index.html         — Public renderer shell (MIT-compatible public use)
+core/engine.js     — Proprietary engine core (USAL-1.0, not in public repo)
+                     Served from https://uuon.world/engine/amazing-family/core.js
+
+THIRD-PARTY DEPENDENCIES
+-------------------------
+ethers v6.15.0
+  License: MIT
+  Source: https://cdnjs.cloudflare.com/ajax/libs/ethers/6.15.0/ethers.umd.min.js
+  Use: Base Mainnet wallet connection and token balance queries
+
+Google Fonts — Share Tech Mono
+  License: SIL Open Font License 1.1
+  Source: https://fonts.google.com/specimen/Share+Tech+Mono
+  Use: UI typography only
+
+MATHEMATICAL PRIOR ART
+-----------------------
+Mandelbox distance estimator — Tom Lowe, 2010 (public domain)
+Amazing Surf distance estimator — Knighty, 2011 (public domain)
+Box fold operation — public domain computational geometry
+Sphere fold operation — public domain computational geometry
+Tetrahedron normal estimation — public domain GLSL technique
+Blinn-Phong shading model — Jim Blinn, 1977 (public domain)
+Soft shadow ray marching — Íñigo Quílez (public domain technique)
+
+The individual DE formulas are prior art. The IP is in the architecture:
+compile-time MODE dispatch, unified parameter structure, XY-only fold
+correction, CPU/GPU mirror parity, and the token-gated iteration system.
+
+GENESIS ANCHOR
+--------------
+This engine is part of the UUON PHRAMEWORK, anchored to Base Mainnet
+block 47259953, hash:
+cf114022b5e4e1d6fdeb36890f35f605857cf2de93b53ebcb9c8e5652413ca04

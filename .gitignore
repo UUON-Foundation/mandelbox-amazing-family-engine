@@ -1,0 +1,26 @@
+# Proprietary engine core — served from uuon.world, not committed to public repo
+core/engine.js
+
+# System
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Archives
+*.zip
+*.tar.gz
+
+# Node
+node_modules/
+package-lock.json
+
+# Exports
+*.obj
+*.stl
+*.glb

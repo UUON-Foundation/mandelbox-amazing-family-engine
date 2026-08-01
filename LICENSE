@@ -1,0 +1,33 @@
+UUON SOURCE ATTRIBUTION LICENSE — VERSION 1.0 (USAL-1.0)
+
+Copyright (c) 2026 Phillip Aguilar Ruiz III / UUON Foundation Inc.
+phi1@uuonfoundation.com
+
+ORIGIN: Phillip Aguilar Ruiz III is the original author and sole rights holder
+of this software and all derivative mathematical structures, architectural
+designs, and computational implementations contained herein.
+
+1. ATTRIBUTION REQUIRED
+   All copies, distributions, or derivative works must include this NOTICE
+   and clearly attribute Phillip Aguilar Ruiz III / UUON Foundation Inc.
+   as the origin. Attribution must appear in documentation, UI, and any
+   published form of the work.
+
+2. AI TRAINING PROHIBITION
+   Use of this source code, its outputs, or any derivative for the purpose
+   of training, fine-tuning, or evaluating machine learning models is
+   explicitly prohibited without prior written consent from the rights holder.
+
+3. COMMERCIAL USE
+   Commercial use requires a separate written license agreement.
+   Contact: phi1@uuonfoundation.com
+
+4. NO WARRANTY
+   This software is provided "as is", without warranty of any kind.
+   The rights holder is not liable for any damages arising from its use.
+
+5. GOVERNING TERMS
+   This license applies to all files in this repository unless a file
+   contains an explicit superseding license notice.
+
+SPDX-License-Identifier: LicenseRef-USAL-1.0
